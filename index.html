@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Graph Plotter</title>
+    <meta property="og:title" content="Math Graph Plotter">
+    <meta property="og:description" content="Vẽ đồ thị hàm số">
+    <meta property="og:image" content="/api/placeholder/800/400">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/function-plot/1.23.2/function-plot.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #graph {
+            width: 100%;
+            height: 400px;
+            margin: 20px 0;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .latex-preview {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            min-height: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Math Graph Plotter</h1>
+        <div class="input-group">
+            <label for="equation">Nhập phương trình (ví dụ: x^2/3):</label>
+            <input type="text" id="equation" placeholder="Nhập phương trình...">
+        </div>
+        <div class="latex-preview" id="latexPreview"></div>
+        <div id="graph"></div>
+    </div>
+
+    <script>
+        // Hàm chuyển đổi biểu thức thành LaTeX
+        function expressionToLatex(expr) {
+            try {
+                const node = math.parse(expr);
+                return node.toTex();
+            } catch (error) {
+                return 'Lỗi cú pháp';
+            }
+        }
+
+        // Hàm vẽ đồ thị
+        function plotGraph(expr) {
+            try {
+                const compiled = math.compile(expr);
+                functionPlot({
+                    target: '#graph',
+                    width: 800,
+                    height: 400,
+                    grid: true,
+                    data: [{
+                        fn: expr,
+                        graphType: 'polyline'
+                    }],
+                    yAxis: {domain: [-10, 10]},
+                    xAxis: {domain: [-10, 10]}
+                });
+            } catch (error) {
+                console.error('Lỗi khi vẽ đồ thị:', error);
+            }
+        }
+
+        // Xử lý URL parameters
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        // Hàm khởi tạo
+        function init() {
+            const equationInput = document.getElementById('equation');
+            const equation = getQueryParam('eq');
+            
+            if (equation) {
+                equationInput.value = decodeURIComponent(equation);
+                updateGraph(equation);
+            }
+
+            equationInput.addEventListener('input', (e) => {
+                updateGraph(e.target.value);
+                // Cập nhật URL
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.set('eq', e.target.value);
+                window.history.pushState({}, '', newUrl);
+            });
+        }
+
+        // Hàm cập nhật đồ thị và LaTeX
+        function updateGraph(expr) {
+            const latexExpr = expressionToLatex(expr);
+            document.getElementById('latexPreview').innerHTML = `\\[${latexExpr}\\]`;
+            MathJax.typeset();
+            plotGraph(expr);
+        }
+
+        // Khởi chạy ứng dụng
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
